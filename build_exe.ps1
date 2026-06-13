@@ -25,6 +25,7 @@ python -m PyInstaller `
   --hidden-import module5_engine_analysis `
   --add-data "template;template" `
   --add-data "engine;engine" `
+  --add-data "test;test" `
   --add-data "$($IconPng.FullName);." `
   --add-data "$($IconIco.FullName);." `
   main.py

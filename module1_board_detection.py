@@ -21,7 +21,7 @@ FULL_SCREENSHOT_PATH = DEBUG_DIR / "full_screenshot.png"
 BOARD_CROP_PATH = DEBUG_DIR / "board_crop.png"
 BOARD_RECT_PATH = DEBUG_DIR / "board_rect.json"
 OVERLAY_PATH = DEBUG_DIR / "board_detect_overlay.png"
-DEFAULT_SAMPLE_PATH = Path(r"C:\Users\jh\Desktop\棋盘.png")
+DEFAULT_SAMPLE_PATH = PROJECT_ROOT / "test" / "棋盘.png"
 
 
 @dataclass(frozen=True)
