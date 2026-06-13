@@ -3,6 +3,7 @@ __pycache__/
 
 build/
 dist/
+release/
 debug_outputs/
 chess_auto.spec
 

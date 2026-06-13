@@ -379,12 +379,12 @@ class AutoMoveWorker(QThread):
 
             ok = self.run_module_script(module_name, script_name)
             if not ok:
-                self.log.emit(f"灞€闈㈤噸鏂拌瘑鍒け璐ワ細{module_name} 鎵ц澶辫触")
+                self.log.emit(f"局面重新识别失败：{module_name} 执行失败")
                 return False
 
         fen = self.read_text("current_fen.txt")
         if not fen:
-            self.log.emit("灞€闈㈤噸鏂拌瘑鍒け璐ワ細鏈壘鍒?current_fen.txt")
+            self.log.emit("局面重新识别失败：未找到 current_fen.txt")
             return False
 
         return True
@@ -399,30 +399,30 @@ class AutoMoveWorker(QThread):
 
             ok = self.run_module_script(module_name, script_name)
             if not ok:
-                self.log.emit(f"蹇€熻瘑鍒け璐ワ細{module_name} 鎵ц澶辫触")
+                self.log.emit(f"快速识别失败：{module_name} 执行失败")
                 return False
 
         fen = self.read_text("current_fen.txt")
         if not fen:
-            self.log.emit("蹇€熻瘑鍒け璐ワ細鏈壘鍒?current_fen.txt")
+            self.log.emit("快速识别失败：未找到 current_fen.txt")
             return False
 
         return True
 
     def refresh_board_crop_and_point_crops_fast(self) -> bool:
         if mss is None:
-            self.log.emit("蹇€熻瘑鍒笉鍙敤锛氭湭瀹夎 mss")
+            self.log.emit("快速识别不可用：未安装 mss")
             return False
 
         board_rect = self.read_json("board_rect.json")
         points_payload = self.read_json("points.json")
         if not board_rect or not points_payload:
-            self.log.emit("蹇€熻瘑鍒笉鍙敤锛氱己灏?board_rect.json 鎴?points.json")
+            self.log.emit("快速识别不可用：缺少 board_rect.json 或 points.json")
             return False
 
         points = points_payload.get("points")
         if not isinstance(points, list) or len(points) != 90:
-            self.log.emit("蹇€熻瘑鍒笉鍙敤锛歱oints.json 鐐逛綅鏁伴噺涓嶆槸 90")
+            self.log.emit("快速识别不可用：points.json 点位数量不是 90")
             return False
 
         try:
@@ -441,7 +441,7 @@ class AutoMoveWorker(QThread):
                 raw = sct.grab(rect)
             board_bgr = cv2.cvtColor(np.array(raw, dtype=np.uint8), cv2.COLOR_BGRA2BGR)
         except Exception as exc:
-            self.log.emit(f"蹇€熻瘑鍒埅鍥惧け璐ワ細{exc}")
+            self.log.emit(f"快速识别截图失败：{exc}")
             return False
 
         board_crop_path = self.debug_dir / "board_crop.png"
@@ -484,7 +484,7 @@ class AutoMoveWorker(QThread):
                     right = cx + radius
                     bottom = cy + radius
             except Exception as exc:
-                self.log.emit(f"蹇€熻瘑鍒偣浣嶆暟鎹棤鏁堬細{exc}")
+                self.log.emit(f"快速识别点位数据无效：{exc}")
                 return False
 
             pad_left = max(0, -left)
@@ -499,7 +499,7 @@ class AutoMoveWorker(QThread):
 
             crop = board_bgr[safe_top:safe_bottom, safe_left:safe_right]
             if crop.size == 0:
-                self.log.emit(f"蹇€熻瘑鍒鍓负绌猴細r{row}c{col}")
+                self.log.emit(f"快速识别裁剪为空：r{row}c{col}")
                 return False
 
             if any([pad_left, pad_top, pad_right, pad_bottom]):
@@ -514,7 +514,7 @@ class AutoMoveWorker(QThread):
 
             output_path = point_crops_dir / f"r{row}c{col}.png"
             if not cv2.imwrite(str(output_path), crop):
-                self.log.emit(f"蹇€熻瘑鍒繚瀛樿鍓浘澶辫触锛歳{row}c{col}")
+                self.log.emit(f"快速识别保存裁剪图失败：r{row}c{col}")
                 return False
 
         self.log.emit("快速识别：已复用棋盘区域和点位，仅刷新 90 点裁剪。")
@@ -542,7 +542,7 @@ class AutoMoveWorker(QThread):
 
         script_path = self.project_root / script_name
         if not getattr(sys, "frozen", False) and not script_path.exists():
-            self.log.emit(f"鑷姩璧版閿欒锛氭湭鎵惧埌妯″潡鑴氭湰 {script_path}")
+            self.log.emit(f"自动走棋错误：未找到模块脚本 {script_path}")
             return False
 
         self.log.emit(f"\n=== 自动走棋执行：{module_name} ===")
@@ -600,11 +600,11 @@ class AutoMoveWorker(QThread):
     def validate_module_outputs(self, script_name: str) -> bool:
         if script_name == "module1_board_detection.py":
             if not (self.debug_dir / "board_crop.png").exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧椾竴鏈敓鎴?board_crop.png")
+                self.log.emit("自动走棋错误：模块一未生成 board_crop.png")
                 return False
 
             if not (self.debug_dir / "board_rect.json").exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧椾竴鏈敓鎴?board_rect.json")
+                self.log.emit("自动走棋错误：模块一未生成 board_rect.json")
                 return False
 
         elif script_name == "module2_point_crops.py":
@@ -616,7 +616,7 @@ class AutoMoveWorker(QThread):
 
             for name in required:
                 if not (self.debug_dir / name).exists():
-                    self.log.emit(f"鑷姩璧版閿欒锛氭ā鍧椾簩鏈敓鎴?{name}")
+                    self.log.emit(f"自动走棋错误：模块二未生成 {name}")
                     return False
 
             point_crops = self.debug_dir / "point_crops"
@@ -625,12 +625,12 @@ class AutoMoveWorker(QThread):
                 return False
 
             if len(list(point_crops.glob("r*c*.png"))) != 90:
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧椾簩鏈敓鎴?90 涓偣浣嶈鍓浘")
+                self.log.emit("自动走棋错误：模块二未生成 90 个点位裁剪图")
                 return False
 
         elif script_name == "module3_piece_recognition.py":
             if not (self.debug_dir / "piece_recognition_results.json").exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧椾笁鏈敓鎴?piece_recognition_results.json")
+                self.log.emit("自动走棋错误：模块三未生成 piece_recognition_results.json")
                 return False
 
         elif script_name == "module4_fen_generation.py":
@@ -638,7 +638,7 @@ class AutoMoveWorker(QThread):
             fen_path = self.debug_dir / "current_fen.txt"
 
             if not legal_path.exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧楀洓鏈敓鎴?legal_check.json")
+                self.log.emit("自动走棋错误：模块四未生成 legal_check.json")
                 return False
 
             try:
@@ -651,20 +651,20 @@ class AutoMoveWorker(QThread):
                 errors = legal.get("errors") or []
                 if errors:
                     for error in errors:
-                        self.log.emit(f"鑷姩璧版閿欒锛氭ā鍧楀洓鍚堟硶鎬ф鏌ュけ璐ワ細{error}")
+                        self.log.emit(f"自动走棋错误：模块四合法性检查失败：{error}")
                 else:
                     self.log.emit("自动走棋错误：模块四合法性检查失败")
                 return False
 
             if not fen_path.exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧楀洓鏈敓鎴?current_fen.txt")
+                self.log.emit("自动走棋错误：模块四未生成 current_fen.txt")
                 return False
 
         elif script_name == "module5_engine_analysis.py":
             result_path = self.debug_dir / "engine_result.json"
 
             if not result_path.exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧椾簲鏈敓鎴?engine_result.json")
+                self.log.emit("自动走棋错误：模块五未生成 engine_result.json")
                 return False
 
             try:
@@ -674,12 +674,12 @@ class AutoMoveWorker(QThread):
                 return False
 
             if result.get("ok") is not True:
-                error = result.get("error") or "鏈煡閿欒"
+                error = result.get("error") or "未知错误"
                 self.log.emit(f"自动走棋错误：模块五失败：{error}")
                 return False
 
             if not (self.debug_dir / "bestmove.txt").exists():
-                self.log.emit("鑷姩璧版閿欒锛氭ā鍧椾簲鏈敓鎴?bestmove.txt")
+                self.log.emit("自动走棋错误：模块五未生成 bestmove.txt")
                 return False
 
         return True
@@ -1074,7 +1074,7 @@ class AutoMoveWorker(QThread):
 
         legal_check = self.read_json("legal_check.json")
         if not legal_check:
-            self.log.emit("鑷姩璧版閿欒锛氭壘涓嶅埌 legal_check.json")
+            self.log.emit("自动走棋错误：找不到 legal_check.json")
             return None
 
         orientation = legal_check.get("orientation")
@@ -1092,12 +1092,12 @@ class AutoMoveWorker(QThread):
 
         points_payload = self.read_json("points.json")
         if not points_payload:
-            self.log.emit("鑷姩璧版閿欒锛氭壘涓嶅埌 points.json")
+            self.log.emit("自动走棋错误：找不到 points.json")
             return None
 
         board_rect = self.read_json("board_rect.json")
         if not board_rect:
-            self.log.emit("鑷姩璧版閿欒锛氭壘涓嶅埌 board_rect.json")
+            self.log.emit("自动走棋错误：找不到 board_rect.json")
             return None
 
         from_point = self.find_point(points_payload, from_screen_row, from_screen_col)
@@ -1116,7 +1116,7 @@ class AutoMoveWorker(QThread):
             to_x = int(round(board_x + float(to_point["x"])))
             to_y = int(round(board_y + float(to_point["y"])))
         except Exception as exc:
-            self.log.emit(f"鑷姩璧版閿欒锛氬睆骞曞潗鏍囪绠楀け璐ワ紝{exc}")
+            self.log.emit(f"自动走棋错误：屏幕坐标计算失败，{exc}")
             return None
 
         return ScreenMove(
@@ -1186,7 +1186,7 @@ class AutoMoveWorker(QThread):
             return True
 
         except Exception as exc:
-            self.log.emit(f"鑷姩璧版閿欒锛氱偣鍑诲け璐ワ紝{exc}")
+            self.log.emit(f"自动走棋错误：点击失败，{exc}")
             return False
 
     def read_text(self, filename: str) -> str | None:

@@ -72,6 +72,8 @@ module4_fen_generation.py     Legality checks and FEN generation
 module5_engine_analysis.py    Pikafish analysis
 engine/                       Engine assets
 template/                     Recognition templates
+test/                         Local test screenshots and sample board images
+run_test_images.py            Batch test helper for local screenshots
 build_exe.ps1                 PyInstaller build script
 ```
 
