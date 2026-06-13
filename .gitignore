@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+
+build/
+dist/
+debug_outputs/
+chess_auto.spec
+
+.env
+.venv/

@@ -1,0 +1,7 @@
+{
+  "analysis_mode": "movetime",
+  "depth": 25,
+  "movetime": 1000,
+  "hash": 4096,
+  "threads": 8
+}
